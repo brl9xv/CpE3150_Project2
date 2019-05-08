@@ -1,13 +1,18 @@
 
 #include <asf.h>
-int offset=0;
+float offset=1;
+int MusicCycles=0;
+int DelayTime;
 int main (void)
 {
-	float offset=1;
 	DDRA=0x00;  //set PA input
 	porta=0xFF;		//pull-up PA resistors
 	DDRE=0x10;		//set speaker output
 	while(1){
+		if(PINA1)
+			Tune1();
+		if(PINA2)
+			Tune2();
 		if(PINA3)
 			Middle_C();
 		if(PINA4)
@@ -15,44 +20,75 @@ int main (void)
 		if(PINA5)
 			Soprano_C();
 		if (PINA6)
-			offset= offset-.1;
+			offset= offset-.10;
 		if(PINA7)
-			offset = offset+.1;
+			offset = offset+.10;
 	}
 }
 void Middle_C(void){  //261.6256 Hz for .1 sec
 // delay = (261.6256Hz)^(-1) / 2 *16 M Hz =30578 MC
 //cycles for .1 second = .1/(261.6256 Hz)^-1 = 26 cycles
-	for(int i = 0; i<26/offset; i++){
-		delay(30578*offset);
-		PORTE=0x10;
-		delay(30578*offset);
-		PORTE=0x00;
-	}
+	SetDelay(30578*offset);
+	MusicCycles=(26/offset);
+	TIMSK=0x01
+	sei();
+	return;
 }
 
 void Tenor_C(void){  //523.2511 Hz for .1sec
 // delay = (523.2511Hz)^(-1) / 2 *16 M Hz =15289 MC
 //cycles for .1 second = .1/(523.2511 Hz)^-1 = 52 cycles
-	for(int i = 0; i<52/offset; i++){
-		delay(15289*offset);
-		PORTE=0x10;
-		delay(15289*offset);
-		PORTE=0x00;
-	}
+	SetDelay(15289*offset);
+	MusicCycles=(52/offset);
+	TIMSK=0x01
+	sei();
+	return;
 }
 
 void Soprano_C(void){  //1046.502 Hz for .1sec
 // delay = (1046.502Hz)^(-1) / 2 *16 M Hz =7645 MC
 //cycles for .1 second = .1/(1046.502 Hz)^-1 = 105 cycles
-	for(int i = 0; i<105/offset; i++){
-		delay(7645*offset);
-		PORTE=0x10;
-		delay(7645*offset);
-		PORTE=0x00;
-	}
+	SetDelay(7645*offset);
+	MusicCycles=(105/offset);
+	TIMSK=0x01
+	sei();
+	return;
+
 }
 
-void delay(int x){
-	for(int i=0; i<x; i++)
+void SetDelay(int x){
+	if(x>65280){
+		DelayTime=-(x/1024);
+		TCNT0=-(x/1024);
+		TCCR0=0x05;
+	}
+	else if(x>16320){
+		DelayTime=-(x/256);
+		TCNT0=-(x/256);
+		TCCR0=0x04;
+	}
+	else if(x>2040){
+		DelayTime=-(x/64);
+		TCNT0=-(x/64);
+		TCCR0=0x03;
+	}
+	else if(x>255){
+		DelayTime=-(x/8);
+		TCNT0=-(x/8);
+		TCCR0=0x02;
+	}
+	else if(x>0){
+		DelayTime=-x;
+		TCNT0=-(x);
+		TCCR0=0x01;
+	}
+	return;
+}
+	
+ISR(TIMER0_OVF_vect){
+	if(MusicCycles>0){
+		MusicCycles-=1;
+		TCNT0=DelayTime;
+		PORTE^=0x10;
+	}
 }
