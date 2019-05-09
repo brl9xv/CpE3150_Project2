@@ -20,13 +20,13 @@ int main (void)
 			Middle_C();
 		if(temp & 0b00000010)
 			Tenor_C();
-		if(PINA5==0)
+		if(temp & 0b00001000)
 			Soprano_C();
-		if (temp & 0b00000100)
+		if (temp & 0b00010000)
 			offset= offset-5;
 		if(offset==0)
 			offset=5;
-		if(temp & 0b00000100)
+		if(temp & 0b0010000)
 			offset = offset+5;
 	}
 }
