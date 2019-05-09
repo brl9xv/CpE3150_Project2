@@ -5,7 +5,7 @@ void Soprano_C();
 void SetDelay(long x);
 
 #include <asf.h>
-int offset=1;
+int offset=100;
 int MusicCycles=0;
 int DelayTime;
 int main (void)
@@ -26,16 +26,16 @@ int main (void)
 		if(PINA5==0)
 		Soprano_C();
 		if (temp & 0b00000100)
-		offset= offset;
+		offset= offset-1;
 		if(temp & 0b00000100)
-		offset = offset;
+		offset = offset+1;
 	}
 }
 void Middle_C(){  //261.6256 Hz for .1 sec
 	// delay = (261.6256Hz)^(-1) / 2 *16 M Hz =30578 MC
 	//cycles for .1 second = .1/(261.6256 Hz)^-1 = 26 cycles
-	SetDelay(30578*offset);
-	MusicCycles=(26/offset);
+	SetDelay(30578*(offset/100));
+	MusicCycles=(26/(offset/100));
 	TIMSK0=0x01;
 	sei();
 }
@@ -43,8 +43,8 @@ void Middle_C(){  //261.6256 Hz for .1 sec
 void Tenor_C(){  //523.2511 Hz for .1sec
 	// delay = (523.2511Hz)^(-1) / 2 *16 M Hz =15289 MC
 	//cycles for .1 second = .1/(523.2511 Hz)^-1 = 52 cycles
-	SetDelay(15289*offset);
-	MusicCycles=(52/offset);
+	SetDelay(15289*(offset/100));
+	MusicCycles=(52/(offset/100));
 	TIMSK0=0x01;
 	sei();
 }
@@ -52,8 +52,8 @@ void Tenor_C(){  //523.2511 Hz for .1sec
 void Soprano_C(){  //1046.502 Hz for .1sec
 	// delay = (1046.502Hz)^(-1) / 2 *16 M Hz =7645 MC
 	//cycles for .1 second = .1/(1046.502 Hz)^-1 = 105 cycles
-	SetDelay(7645*offset);
-	MusicCycles=(105/offset);
+	SetDelay(7645*(offset/100));
+	MusicCycles=(105/(offset/100));
 	TIMSK0=0x01;
 	sei();
 
