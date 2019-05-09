@@ -17,18 +17,17 @@ int main (void)
 	while(1){
 		unsigned char temp = ~PINA;
 		if(temp & 0b00000001)
-		{
-		PORTD=0xFF;
-		Middle_C();
-		}
+			Middle_C();
 		if(temp & 0b00000010)
-		Tenor_C();
+			Tenor_C();
 		if(PINA5==0)
-		Soprano_C();
+			Soprano_C();
 		if (temp & 0b00000100)
-		offset= offset-1;
+			offset= offset-5;
+		if(offset==0)
+			offset=5;
 		if(temp & 0b00000100)
-		offset = offset+1;
+			offset = offset+5;
 	}
 }
 void Middle_C(){  //261.6256 Hz for .1 sec
