@@ -59,7 +59,9 @@ void Soprano_C(){  //1046.502 Hz for .1sec
 }
 
 void SetDelay(long x){
-	if(x>65280){
+	if(x>261120)
+		return;//too big for the timer
+	else if(x>65280){
 		DelayTime=-(x/1024);
 		TCNT0=-(x/1024);
 		TCCR0B=0x05;
