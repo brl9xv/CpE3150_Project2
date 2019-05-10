@@ -3,6 +3,7 @@ void Middle_C();
 void Tenor_C();
 void Soprano_C();
 void SetDelay(long x);
+void Tune1();
 
 #include <asf.h>
 int offset=100;
@@ -28,6 +29,8 @@ int main (void)
 			offset=5;
 		if(temp & 0b0010000)
 			offset = offset+5;
+		if(temp & 0b0100000)
+			Tune1();
 	}
 }
 void Middle_C(){  //261.6256 Hz for .1 sec
@@ -56,6 +59,37 @@ void Soprano_C(){  //1046.502 Hz for .1sec
 	TIMSK0=0x01;
 	sei();
 
+}
+
+void Tune1(){
+	G4(2);
+	pause(1);
+	G4(2);
+	pause(1);
+	G4(2);
+	pause(1);
+	
+	D4_E4(1);
+	A4-B4(1);
+	G4(2);
+	pause(1);
+	D4-E4(1);
+	A4-B4(1);
+	
+	D5(2);
+	pause(1);
+	D5(2);
+	pause(1);
+	D5(2);
+	pause(1);
+	
+	D4_E4(1);
+	A4-B4(1);
+	G4(2);
+	pause(1);
+	D4-E4(1);
+	A4-B4(1);
+	
 }
 
 void SetDelay(long x){
