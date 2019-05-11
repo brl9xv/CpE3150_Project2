@@ -165,7 +165,7 @@ void Tune1(){
 	
 }
 
-void Tune1(){
+void Tune2(){
 
 }
 void SetDelay(long x){
