@@ -33,6 +33,9 @@ int G5 = 784;
 int A5 = 880;
 int B5 = 988;
 int C6 = 1047;
+int D4_E4=311;
+int A4_B4=466;
+int pause=1;
 
 //	Global Variables	//
 
@@ -102,41 +105,41 @@ void Soprano_C(){  //1046.502 Hz for .1sec
 // e.g. playNote(c4, 1)
 void playNote(int frequency, int length)
 {
-	int delay = 16000000/(2*frequency);
+	int delay = 16000000*(2/frequency);
 	SetDelay(delay);
-	MusicCycles = frequency/length
+	MusicCycles = frequency/length/10
 	TIMSK0 = 0x01;
 	sei()
 }
 
 void Tune1(){
-	G4(2);
-	pause(1);
-	G4(2);
-	pause(1);
-	G4(2);
-	pause(1);
+	playNote(G4,2);
+	playNote(pause,1);
+	playNote(G4,2);
+	playNote(pause,1);
+	playNote(G4,2);
+	playNote(pause,1);
 	
-	D4_E4(1);
-	A4-B4(1);
-	G4(2);
-	pause(1);
-	D4-E4(1);
-	A4-B4(1);
+	playNote(D4_E4,1);
+	playNote(A4_B4,1);
+	playNote(G4,2);
+	playNote(pause,1);
+	playNote(D4_E4,1);
+	playNote(A4_B4,1);
 	
-	D5(2);
-	pause(1);
-	D5(2);
-	pause(1);
-	D5(2);
-	pause(1);
+	playNote(D5,2);
+	playNote(pause,1);
+	playNote(D5,2);
+	playNote(pause,1);
+	playNote(D5,2);
+	playNote(pause,1);
 	
-	D4_E4(1);
-	A4-B4(1);
-	G4(2);
-	pause(1);
-	D4-E4(1);
-	A4-B4(1);
+	playNote(D4_E4,1);
+	playNote(A4_B4,1);
+	playNote(G4,2);
+	playNote(pause,1);
+	playNote(D4_E4,1);
+	playNote(A4_B4,1);
 	
 }
 
