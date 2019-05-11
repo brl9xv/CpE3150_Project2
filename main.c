@@ -8,6 +8,7 @@
 void playNote(int frequency, int length);
 void SetDelay(long x);
 void Tune1();
+void Tune2();
 
 //	Frequency Constants		//
 
@@ -67,6 +68,8 @@ int main (void)
 			offset = offset+5;
 		if(temp & 0b0100000)
 			Tune1();
+		if(temp & 0b1000000)
+			Tune2();
 	}
 }
 
@@ -105,11 +108,30 @@ void Soprano_C(){  //1046.502 Hz for .1sec
 // e.g. playNote(c4, 1)
 void playNote(int frequency, int length)
 {
-	int delay = 16000000*(2/frequency);
+	int delay = 16000000*(2/frequency)*(offset/100);
 	SetDelay(delay);
-	MusicCycles = frequency/length/10;
+	MusicCycles = frequency/length/10/(offset/100);
 	TIMSK0 = 0x01;
 	sei();
+	
+	while(MusicCycles!=0){
+		unsigned char temp = ~PINA;
+		if(temp & 0b00000001)
+			return;				//stop the sound
+		if(temp & 0b00000010)
+			return;				//stop the sound,can be use for personal feature
+		if(temp & 0b00001000)
+			return;				//stop the sound,can be use for personal feature
+		if (temp & 0b00010000)
+			offset= offset-5;
+		if(offset==0)
+			offset=5;
+		if(temp & 0b0010000)
+			offset = offset+5;
+		if(temp & 0b0100000)
+			return;				//stop the sound,can be use for personal feature
+	}
+	return;
 }
 
 void Tune1(){
