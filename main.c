@@ -1,14 +1,47 @@
+#include <asf.h>
 
-void Middle_C();
-void Tenor_C();
-void Soprano_C();
+//	Predeclaration		//
+
+//void Middle_C();
+//void Tenor_C();
+//void Soprano_C();
+void playNote(int frequency, int length);
 void SetDelay(long x);
 void Tune1();
 
-#include <asf.h>
+//	Frequency Constants		//
+
+int C3 = 131;
+int D3 = 147;
+int E3 = 165;
+int F3 = 175;
+int G3 = 196;
+int A3 = 220;
+int B3 = 247;
+int C4 = 262;
+int D4 = 294;
+int E4 = 230;
+int F4 = 349;
+int G4 = 392;
+int A4 = 440;
+int B4 = 494;
+int C5 = 523;
+int D5 = 587;
+int E5 = 659;
+int F5 = 698;
+int G5 = 784;
+int A5 = 880;
+int B5 = 988;
+int C6 = 1047;
+
+//	Global Variables	//
+
 int offset=100;
 int MusicCycles=0;
 int DelayTime;
+
+//	Main	//
+
 int main (void)
 {
 	DDRA=0x00;  //set PA input
@@ -33,6 +66,8 @@ int main (void)
 			Tune1();
 	}
 }
+
+/*
 void Middle_C(){  //261.6256 Hz for .1 sec
 	// delay = (261.6256Hz)^(-1) / 2 *16 M Hz =30578 MC
 	//cycles for .1 second = .1/(261.6256 Hz)^-1 = 26 cycles
@@ -58,7 +93,20 @@ void Soprano_C(){  //1046.502 Hz for .1sec
 	MusicCycles=(105/(offset/100));
 	TIMSK0=0x01;
 	sei();
+}
+*/
 
+// plays passed note for length
+// use note constants for frequency
+// length gives division factor (e.g. 1 is whole note, 2 is half note, etc.)
+// e.g. playNote(c4, 1)
+void playNote(int frequency, int length)
+{
+	int delay = 16000000/(2*frequency);
+	SetDelay(delay);
+	MusicCycles = frequency/length
+	TIMSK0 = 0x01;
+	sei()
 }
 
 void Tune1(){
