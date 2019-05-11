@@ -1,4 +1,6 @@
-#include <asf.h>
+#include <avr/delay.h>
+#include <avr/io.h>
+#include <avr/interrupt.h>
 
 //	Predeclaration		//
 
@@ -6,60 +8,97 @@
 //void Tenor_C();
 //void Soprano_C();
 void playNote(int frequency, int length);
+void playSong(int * noteArray, int length);
 void SetDelay(long x);
 void Tune1();
 void Tune2();
 
 //	Frequency Constants		//
 
-int C3 = 131;
-int D3 = 147;
-int E3 = 165;
-int F3 = 175;
-int G3 = 196;
-int A3 = 220;
-int B3 = 247;
-int C4 = 262;
-int D4 = 294;
-int E4 = 230;
-int F4 = 349;
-int G4 = 392;
-int A4 = 440;
-int B4 = 494;
-int C5 = 523;
-int D5 = 587;
-int E5 = 659;
-int F5 = 698;
-int G5 = 784;
-int A5 = 880;
-int B5 = 988;
-int C6 = 1047;
-int D4_E4=311;
-int A4_B4=466;
-int pause=1;
+const int C3 = 131;
+const int D3 = 147;
+const int E3 = 165;
+const int F3 = 175;
+const int G3 = 196;
+const int A3 = 220;
+const int B3 = 247;
+const int C4 = 262;
+const int D4 = 294;
+const int E4 = 330;
+const int F4 = 349;
+const int G4 = 392;
+const int A4 = 440;
+const int B4 = 494;
+const int C5 = 523;
+const int D5 = 587;
+const int E5 = 659;
+const int F5 = 698;
+const int G5 = 784;
+const int A5 = 880;
+const int B5 = 988;
+const int C6 = 1047;
+const int D6 = 1175;
+const int D4_E4=311;
+const int A4_B4=466;
+const int pause = 0;
+
+//	Song Constants	//
+// int arrays with frequency, note length
+
+//	Mary had a little lamb
+int song1[52] = {
+	988, 4,
+	880, 4,
+	784, 4,
+	880, 4,
+	988, 4,
+	988, 4,
+	988, 2,
+	880, 4,
+	880, 4,
+	880, 2,
+	988, 4,
+	1175, 4,
+	1175, 2,
+	988, 4,
+	880, 4,
+	784, 4,
+	880, 4,
+	988, 4,
+	988, 4,
+	988, 4,
+	988, 4,
+	880, 4,
+	880, 4,
+	988, 4,
+	880, 4,
+	784, 2,
+};
 
 //	Global Variables	//
 
 int offset=100;
 int MusicCycles=0;
 int DelayTime;
+int nextNote;
 
 //	Main	//
 
 int main (void)
 {
-	DDRA=0x00;  //set PA input
-	PORTA=0xFF;		//pull-up PA resistors
-	DDRD=0xFF;
-	DDRE=0x10;		//set speaker output
+	DDRA=0x00;		// Set PA input
+	PORTA=0xFF;		// Set PA pull-up resistors
+	DDRD=0xFF;		// Set PD output
+	DDRE=0x10;		// Set speaker output
+	sei();			// Set global interrupts
 	while(1){
 		unsigned char temp = ~PINA;
 		if(temp & 0b00000001)
-			Middle_C();
+			playNote(C4,4);
 		if(temp & 0b00000010)
-			Tenor_C();
-		if(temp & 0b00001000)
-			Soprano_C();
+			playSong(song1,52);
+		if(temp & 0b00000100)
+			playNote(G4,4);
 		if (temp & 0b00010000)
 			offset= offset-5;
 		if(offset==0)
@@ -69,38 +108,9 @@ int main (void)
 		if(temp & 0b0100000)
 			Tune1();
 		if(temp & 0b1000000)
-			Tune2();
+			playSong(song1,52);
 	}
 }
-
-/*
-void Middle_C(){  //261.6256 Hz for .1 sec
-	// delay = (261.6256Hz)^(-1) / 2 *16 M Hz =30578 MC
-	//cycles for .1 second = .1/(261.6256 Hz)^-1 = 26 cycles
-	SetDelay(30578*(offset/100));
-	MusicCycles=(26/(offset/100));
-	TIMSK0=0x01;
-	sei();
-}
-
-void Tenor_C(){  //523.2511 Hz for .1sec
-	// delay = (523.2511Hz)^(-1) / 2 *16 M Hz =15289 MC
-	//cycles for .1 second = .1/(523.2511 Hz)^-1 = 52 cycles
-	SetDelay(15289*(offset/100));
-	MusicCycles=(52/(offset/100));
-	TIMSK0=0x01;
-	sei();
-}
-
-void Soprano_C(){  //1046.502 Hz for .1sec
-	// delay = (1046.502Hz)^(-1) / 2 *16 M Hz =7645 MC
-	//cycles for .1 second = .1/(1046.502 Hz)^-1 = 105 cycles
-	SetDelay(7645*(offset/100));
-	MusicCycles=(105/(offset/100));
-	TIMSK0=0x01;
-	sei();
-}
-*/
 
 // plays passed note for length
 // use note constants for frequency
@@ -108,12 +118,18 @@ void Soprano_C(){  //1046.502 Hz for .1sec
 // e.g. playNote(c4, 1)
 void playNote(int frequency, int length)
 {
-	int delay = 16000000*(2/frequency)*(offset/100);
-	SetDelay(delay);
-	MusicCycles = frequency/length/10/(offset/100);
+	if(!frequency)
+	{
+		for(int i=0; i<100/length; i+=1)
+			_delay_ms(100);
+	}
+
+	SetDelay((16000000/frequency)*2);
+	MusicCycles = frequency/length;//(offset/100);
 	TIMSK0 = 0x01;
-	sei();
-	
+	nextNote = 0;
+
+	/*
 	while(MusicCycles!=0){
 		unsigned char temp = ~PINA;
 		if(temp & 0b00000001)
@@ -130,10 +146,22 @@ void playNote(int frequency, int length)
 			offset = offset+5;
 		if(temp & 0b0100000)
 			return;				//stop the sound,can be use for personal feature
-	}
+	}*/
+
 	return;
 }
 
+void playSong(int * noteArray, int length)
+{
+	for(int i=0; i<length; i+=2)
+	{
+		playNote(noteArray[i],noteArray[i+1]);
+		while(!nextNote)
+			_delay_ms(1);
+	}
+}
+
+/*
 void Tune1(){
 	playNote(G4,2);
 	playNote(pause,1);
@@ -162,12 +190,9 @@ void Tune1(){
 	playNote(pause,1);
 	playNote(D4_E4,1);
 	playNote(A4_B4,1);
-	
 }
+*/
 
-void Tune2(){
-
-}
 void SetDelay(long x){
 	if(x>261120)
 		return;//too big for the timer
@@ -207,4 +232,6 @@ ISR(TIMER0_OVF_vect){
 		MusicCycles-=1;
 		PORTE^=0x10;
 	}
+	else
+		nextNote=1;
 }
