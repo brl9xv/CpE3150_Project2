@@ -165,6 +165,9 @@ void Tune1(){
 	
 }
 
+void Tune1(){
+
+}
 void SetDelay(long x){
 	if(x>261120)
 		return;//too big for the timer
