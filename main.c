@@ -107,9 +107,9 @@ void playNote(int frequency, int length)
 {
 	int delay = 16000000*(2/frequency);
 	SetDelay(delay);
-	MusicCycles = frequency/length/10
+	MusicCycles = frequency/length/10;
 	TIMSK0 = 0x01;
-	sei()
+	sei();
 }
 
 void Tune1(){
