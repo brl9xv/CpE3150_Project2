@@ -1,3 +1,13 @@
+/*
+ * GccApplication4.c
+ *
+ * Created: 5/12/2019 5:48:42 PM
+ * Author : Brendan Liebhart
+ */ 
+
+#include <avr/io.h>
+
+
 #include <avr/delay.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -75,6 +85,71 @@ int song1[52] = {
 	784, 2,
 };
 
+int song2[124] = {
+	659, 4,//e
+	659, 4,
+	698, 4,//f
+	784, 4,//g
+	784, 4,
+	698, 4,
+	659, 4,
+	587, 4,//d
+	523, 4,//c
+	523, 4,
+	587, 4,
+	659, 4,
+	659, 4,
+	587, 4,
+	587, 2,//d,half
+	659, 4,
+	659, 4,
+	698, 4,
+	784, 4,
+	784, 4,
+	698, 4,
+	659, 4,
+	587, 4,
+	523, 4,
+	523, 4,
+	587, 4,
+	659, 4,
+	587, 4,
+	523, 4,
+	523, 2,//c,half
+	587, 4,
+	587, 4,
+	659, 4,
+	523, 4,
+	587, 4,
+	659, 8,
+	698, 8,
+	659, 4,
+	523, 4,
+	587, 4,
+	659, 8,
+	698, 8,
+	659, 4,
+	587, 4,
+	523, 4,
+	587, 4,
+	0, 2,
+	659, 4,
+	659, 4,
+	698, 4,
+	784, 4,
+	784, 4,
+	698, 4,
+	659, 4,
+	587, 4,
+	523, 4,
+	523, 4,
+	587, 4,
+	659, 4,
+	587, 4,
+	523, 4,
+	523, 4
+};
+
 //	Global Variables	//
 
 int offset=100;
@@ -98,15 +173,13 @@ int main (void)
 		if(temp & 0b00000010)
 			playSong(song1,52);
 		if(temp & 0b00000100)
-			playNote(G4,4);
+			playSong(song2,124);
 		if (temp & 0b00010000)
 			offset= offset-5;
 		if(offset==0)
 			offset=5;
 		if(temp & 0b0010000)
 			offset = offset+5;
-		if(temp & 0b0100000)
-			Tune1();
 		if(temp & 0b1000000)
 			playSong(song1,52);
 	}
@@ -129,25 +202,6 @@ void playNote(int frequency, int length)
 	TIMSK0 = 0x01;
 	nextNote = 0;
 
-	/*
-	while(MusicCycles!=0){
-		unsigned char temp = ~PINA;
-		if(temp & 0b00000001)
-			return;				//stop the sound
-		if(temp & 0b00000010)
-			return;				//stop the sound,can be use for personal feature
-		if(temp & 0b00001000)
-			return;				//stop the sound,can be use for personal feature
-		if (temp & 0b00010000)
-			offset= offset-5;
-		if(offset==0)
-			offset=5;
-		if(temp & 0b0010000)
-			offset = offset+5;
-		if(temp & 0b0100000)
-			return;				//stop the sound,can be use for personal feature
-	}*/
-
 	return;
 }
 
@@ -160,38 +214,6 @@ void playSong(int * noteArray, int length)
 			_delay_ms(1);
 	}
 }
-
-/*
-void Tune1(){
-	playNote(G4,2);
-	playNote(pause,1);
-	playNote(G4,2);
-	playNote(pause,1);
-	playNote(G4,2);
-	playNote(pause,1);
-	
-	playNote(D4_E4,1);
-	playNote(A4_B4,1);
-	playNote(G4,2);
-	playNote(pause,1);
-	playNote(D4_E4,1);
-	playNote(A4_B4,1);
-	
-	playNote(D5,2);
-	playNote(pause,1);
-	playNote(D5,2);
-	playNote(pause,1);
-	playNote(D5,2);
-	playNote(pause,1);
-	
-	playNote(D4_E4,1);
-	playNote(A4_B4,1);
-	playNote(G4,2);
-	playNote(pause,1);
-	playNote(D4_E4,1);
-	playNote(A4_B4,1);
-}
-*/
 
 void SetDelay(long x){
 	if(x>261120)
@@ -235,3 +257,4 @@ ISR(TIMER0_OVF_vect){
 	else
 		nextNote=1;
 }
+
