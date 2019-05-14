@@ -1,6 +1,7 @@
 #include <util/delay.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <string.h>
 
 //	Predeclaration		//
 void USART_Init(unsigned long BAUDRATE);                // initialize USART function
@@ -12,10 +13,11 @@ void Tune2();
 void USART_TxChar (unsigned char data);
 void USART_SendString(unsigned char *str);
 ISR(USART1_RX_vect);
-
+void playInsertSong(unsigned char *song);
 unsigned char value;
 int tempo = 0;
 const int tempoList[4] = {1,2,3,4};
+unsigned char inputstring[24];
 
 #define F_CPU 16000000UL
 
@@ -188,6 +190,14 @@ int main (void)
 			offset=5;
 		if(temp & 0b0010000)
 			offset = offset+5;
+		if(temp & 0b00000001 && operation==3)
+		{
+			strcat(inputstring, '\0');
+			USART_SendString("Playing Notes:\t");
+			USART_SendString(inputstring);
+			USART_SendString("\n");
+			playInsertSong(inputstring);
+		}
 	}
 }
 
@@ -215,7 +225,7 @@ void playSong(int * noteArray, int length)
 {
 	for(int i=0; i<length; i+=2)
 	{
-		if(operation==1 && !(~PINA & 0b00000100))
+		if(operation==1 || !(~PINA & 0b00000100) || operation==3)
 		{
 			
 			playNote(noteArray[i],noteArray[i+1]);
@@ -309,7 +319,14 @@ void USART_SendString(unsigned char *str)
 
 ISR(USART1_RX_vect)
 {
-	value = UDR1;  // UDR1 is register with received byte
+	value = UDR1; // UDR1 is register with received byte
+	if (operation == 3)
+	{
+		char str[2];
+		str[0] = value;
+		str[1] = '\0';
+		strcat(inputstring, str);
+	}
 
 	switch(value)
 	{
@@ -352,5 +369,69 @@ ISR(USART1_RX_vect)
 				USART_SendString("4x Tempo\n");
 			}
 			break;
+		case 'I':
+			memset(inputstring, 0, sizeof(inputstring));
+			if(operation!=3)
+				USART_SendString("Note Input Mode\nType the note letters that you want played then press button 1 to play song\n");
+			operation=3;
+			break;
 	}
+}
+
+void playInsertSong(unsigned char *song)
+{
+	int songplay[50];
+	int i = 0;
+	int temp = 0;
+	while (song[i]!='\0')
+	{
+		switch(song[i])
+		{
+			case 'A':
+			{
+				songplay[(i*2)] = 880;
+				songplay[(i*2)+1] = 4;
+				break;
+			}
+			case 'B':
+			{
+				songplay[(i*2)] = 988;
+				songplay[(i*2)+1] = 4;
+				break;
+			}
+			case 'C':
+			{
+				songplay[(i*2)] = 523;
+				songplay[(i*2)+1] = 4;
+				break;
+			}
+			case 'D':
+			{
+				songplay[(i*2)] = 587;
+				songplay[(i*2)+1] = 4;
+				break;
+			}
+			case 'E':
+			{
+				songplay[(i*2)] = 659;
+				songplay[(i*2)+1] = 4;
+				break;
+			}
+			case 'F':
+			{
+				songplay[(i*2)] = 698;
+				songplay[(i*2)+1] = 4;
+				break;
+			}
+			case 'G':
+			{
+				songplay[(i*2)] = 784;
+				songplay[(i*2)+1] = 4;
+				break;
+			}
+		}
+		i++;
+	}
+	temp = (i) * 2;
+	playSong(songplay, temp);
 }
