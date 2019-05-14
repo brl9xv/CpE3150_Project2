@@ -1,9 +1,9 @@
-#include <avr/delay.h>
+#include <util/delay.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
 //	Predeclaration		//
-void USART_Init(unsigned long);                // initialize USART function
+void USART_Init(unsigned long BAUDRATE);                // initialize USART function
 void playNote(int frequency, int length);
 void playSong(int * noteArray, int length);
 void SetDelay(long x);
@@ -13,6 +13,8 @@ void USART_TxChar (unsigned char data);
 void USART_SendString(unsigned char *str);
 ISR(USART1_RX_vect);
 unsigned char value;
+
+#define F_CPU 16000000UL
 
 //	Frequency Constants		//
 
@@ -161,6 +163,8 @@ int main (void)
 	UCSR1B |= (1 << RXCIE);    // receive interrupt enabled
 	sei();			// Set global interrupts
 	
+	USART_SendString("Song Mode:\nButton 2 = Mary had a little lamb\nButton 3 = Ode to Joy\nPress n for single note mode\n");
+	
 	while(1)
 	{
 		unsigned char temp = ~PINA;
@@ -255,3 +259,65 @@ void SetDelay(long x)
 	}
 	return;
 }
+
+ISR(TIMER0_OVF_vect)
+{
+	TCNT0=DelayTime;
+	if(MusicCycles>0){
+		MusicCycles-=1;
+		PORTE^=0x10;
+	}
+	else
+		nextNote=1;
+}
+
+void USART_Init(unsigned long BAUDRATE)                // USART initialize function */
+{
+int BAUD_PRESCALE = (((F_CPU / (BAUDRATE * 16UL))) - 1);      // Define prescale 
+
+UCSR1B |= (1 << RXEN) | (1 << TXEN) ;            // Enable USART transmitter and receiver
+UCSR1C |= (1 << UCSZ0) | (1 << UCSZ1);            // Write USCRC for 8 bit data and 1 stop bit, asynchronous
+
+UBRR1L = BAUD_PRESCALE;                            // Load UBRRL with lower 8 bit of prescale 
+UBRR1H = (BAUD_PRESCALE >> 8);                    // Load UBRRH with upper 8 bit of prescale 
+}
+
+// Data transmitting function
+void USART_TxChar(unsigned char data)
+{
+	UDR1 = data;                                        /* Write data to be transmitting in UDR */
+	while (!(UCSR1A & (1<<UDRE)));                    /* Wait until data transmit and buffer get empty */
+}
+
+
+// used to send a string of characters to the USART (instead of one character at a time).
+void USART_SendString(unsigned char *str)
+{
+	int i=0;
+	while (str[i]!='\0')
+	{
+		USART_TxChar(str[i]);                        /* Send each char of string till the NULL */
+		i++;
+	}
+}
+
+ISR(USART1_RX_vect)
+{
+	value = UDR1;  // UDR1 is register with received byte
+	
+	switch(value)
+	{
+		case 'S':
+			if(operation!=1)
+				USART_SendString("Song Mode:\nButton 2 = Mary had a little lamb\nButton 3 = Ode to Joy\nPress n for single note mode\n");
+			operation=1;
+			break;
+		case 'N':
+			if(operation!=2)
+				USART_SendString("Single Note Mode:\n");
+			operation=2;
+			break;
+	}
+}
+
+
