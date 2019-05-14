@@ -316,12 +316,13 @@ ISR(USART1_RX_vect)
 		case 'S':
 			if(operation!=1)
 				USART_SendString("\nSong Mode:\nButton 1 = Mary had a little lamb\nButton 2 = Ode to Joy\nEnter 1-4 to change tempo multiplier\nEnter n for single note mode\n");
-			operation=1;
+			operation = 1;
 			break;
 		case 'N':
 			if(operation!=2)
 				USART_SendString("\nSingle Note Mode:\n");
-			operation=2;
+			tempo = 0;
+			operation = 2;
 			break;
 		case '1':
 			if(operation==1)
