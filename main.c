@@ -12,7 +12,10 @@ void Tune2();
 void USART_TxChar (unsigned char data);
 void USART_SendString(unsigned char *str);
 ISR(USART1_RX_vect);
+
 unsigned char value;
+int tempo = 0;
+const int tempoList[4] = {1,2,3,4};
 
 #define F_CPU 16000000UL
 
@@ -163,25 +166,28 @@ int main (void)
 	UCSR1B |= (1 << RXCIE);    // receive interrupt enabled
 	sei();			// Set global interrupts
 	
-	USART_SendString("Song Mode:\nButton 2 = Mary had a little lamb\nButton 3 = Ode to Joy\nPress n for single note mode\n");
+	USART_SendString("Song Mode:\nButton 1 = Mary had a little lamb\nButton 2 = Ode to Joy\nPress n for single note mode\n");
 	
 	while(1)
 	{
 		unsigned char temp = ~PINA;
-		if(temp & 0b00000001)
-			playNote(C4,4);
-		if(temp & 0b00000010 && operation==1)
+		
+		if(temp & 0b00000001 && operation==1)
+		{
+			USART_SendString("Now Playing: Mary had a Little Lamb\n");
 			playSong(song1,52);
-		if(temp & 0b00000100 && operation==1)
+		}
+		if(temp & 0b00000010 && operation==1)
+		{
+			USART_SendString("Ode to Joy\n");
 			playSong(song2,124);
+		}
 		if (temp & 0b00010000)
 			offset= offset-5;
 		if(offset==0)
 			offset=5;
 		if(temp & 0b0010000)
 			offset = offset+5;
-		if(temp & 0b1000000)
-			playSong(song1,52);
 	}
 }
 
@@ -193,12 +199,12 @@ void playNote(int frequency, int length)
 {
 	if(!frequency)
 	{
-		for(int i=0; i<100/length; i+=1)
-			_delay_ms(100);
+		for(int i=0; i<(100/length)/tempoList[tempo]; i+=1)
+		_delay_ms(100);
 	}
 
 	SetDelay((16000000/frequency)*2);
-	MusicCycles = frequency/length;//(offset/100);
+	MusicCycles = (frequency/length)/tempoList[tempo];//(offset/100);
 	TIMSK0 = 0x01;
 	nextNote = 0;
 
@@ -209,12 +215,12 @@ void playSong(int * noteArray, int length)
 {
 	for(int i=0; i<length; i+=2)
 	{
-		if(operation ==1)
+		if(operation==1 && !(~PINA & 0b00000100))
 		{
 			
 			playNote(noteArray[i],noteArray[i+1]);
 			while(!nextNote)
-				_delay_ms(1);
+			_delay_ms(1);
 		}
 		else
 		{
@@ -226,7 +232,7 @@ void playSong(int * noteArray, int length)
 void SetDelay(long x)
 {
 	if(x>261120)
-		return;//too big for the timer
+	return;//too big for the timer
 	else if(x>65280)
 	{
 		DelayTime=-(x/1024);
@@ -268,18 +274,18 @@ ISR(TIMER0_OVF_vect)
 		PORTE^=0x10;
 	}
 	else
-		nextNote=1;
+	nextNote=1;
 }
 
 void USART_Init(unsigned long BAUDRATE)                // USART initialize function */
 {
-int BAUD_PRESCALE = (((F_CPU / (BAUDRATE * 16UL))) - 1);      // Define prescale 
+	int BAUD_PRESCALE = (((F_CPU / (BAUDRATE * 16UL))) - 1);      // Define prescale
 
-UCSR1B |= (1 << RXEN) | (1 << TXEN) ;            // Enable USART transmitter and receiver
-UCSR1C |= (1 << UCSZ0) | (1 << UCSZ1);            // Write USCRC for 8 bit data and 1 stop bit, asynchronous
+	UCSR1B |= (1 << RXEN) | (1 << TXEN) ;            // Enable USART transmitter and receiver
+	UCSR1C |= (1 << UCSZ0) | (1 << UCSZ1);            // Write USCRC for 8 bit data and 1 stop bit, asynchronous
 
-UBRR1L = BAUD_PRESCALE;                            // Load UBRRL with lower 8 bit of prescale 
-UBRR1H = (BAUD_PRESCALE >> 8);                    // Load UBRRH with upper 8 bit of prescale 
+	UBRR1L = BAUD_PRESCALE;                            // Load UBRRL with lower 8 bit of prescale
+	UBRR1H = (BAUD_PRESCALE >> 8);                    // Load UBRRH with upper 8 bit of prescale
 }
 
 // Data transmitting function
@@ -304,20 +310,46 @@ void USART_SendString(unsigned char *str)
 ISR(USART1_RX_vect)
 {
 	value = UDR1;  // UDR1 is register with received byte
-	
+
 	switch(value)
 	{
 		case 'S':
 			if(operation!=1)
-				USART_SendString("Song Mode:\nButton 2 = Mary had a little lamb\nButton 3 = Ode to Joy\nPress n for single note mode\n");
+				USART_SendString("\nSong Mode:\nButton 1 = Mary had a little lamb\nButton 2 = Ode to Joy\nEnter 1-4 to change tempo multiplier\nEnter n for single note mode\n");
 			operation=1;
 			break;
 		case 'N':
 			if(operation!=2)
-				USART_SendString("Single Note Mode:\n");
+				USART_SendString("\nSingle Note Mode:\n");
 			operation=2;
+			break;
+		case '1':
+			if(operation==1)
+			{
+				tempo = 0;
+				USART_SendString("1x Tempo\n");
+			}
+			break;
+		case '2':
+			if(operation==1)
+			{
+				tempo = 1;
+				USART_SendString("2x Tempo\n");
+			}
+			break;
+		case '3':
+			if(operation==1)
+			{
+				tempo = 2;
+				USART_SendString("3x Tempo\n");
+			}
+			break;
+		case '4':
+			if(operation==1)
+			{
+				tempo = 3;
+				USART_SendString("4x Tempo\n");
+			}
 			break;
 	}
 }
-
-
