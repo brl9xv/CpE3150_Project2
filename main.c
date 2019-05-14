@@ -1,27 +1,18 @@
-/*
- * GccApplication4.c
- *
- * Created: 5/12/2019 5:48:42 PM
- * Author : Brendan Liebhart
- */ 
-
-#include <avr/io.h>
-
-
 #include <avr/delay.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
 //	Predeclaration		//
-
-//void Middle_C();
-//void Tenor_C();
-//void Soprano_C();
+void USART_Init(unsigned long);                // initialize USART function
 void playNote(int frequency, int length);
 void playSong(int * noteArray, int length);
 void SetDelay(long x);
 void Tune1();
 void Tune2();
+void USART_TxChar (unsigned char data);
+void USART_SendString(unsigned char *str);
+ISR(USART1_RX_vect);
+unsigned char value;
 
 //	Frequency Constants		//
 
@@ -151,7 +142,7 @@ int song2[124] = {
 };
 
 //	Global Variables	//
-
+int operation =1;
 int offset=100;
 int MusicCycles=0;
 int DelayTime;
@@ -163,16 +154,21 @@ int main (void)
 {
 	DDRA=0x00;		// Set PA input
 	PORTA=0xFF;		// Set PA pull-up resistors
-	DDRD=0xFF;		// Set PD output
+	DDRD=0xFB;		// Set PD output	PORTD |= 0xFF;
 	DDRE=0x10;		// Set speaker output
+	
+	USART_Init(9600);
+	UCSR1B |= (1 << RXCIE);    // receive interrupt enabled
 	sei();			// Set global interrupts
-	while(1){
+	
+	while(1)
+	{
 		unsigned char temp = ~PINA;
 		if(temp & 0b00000001)
 			playNote(C4,4);
-		if(temp & 0b00000010)
+		if(temp & 0b00000010 && operation==1)
 			playSong(song1,52);
-		if(temp & 0b00000100)
+		if(temp & 0b00000100 && operation==1)
 			playSong(song2,124);
 		if (temp & 0b00010000)
 			offset= offset-5;
@@ -209,52 +205,53 @@ void playSong(int * noteArray, int length)
 {
 	for(int i=0; i<length; i+=2)
 	{
-		playNote(noteArray[i],noteArray[i+1]);
-		while(!nextNote)
-			_delay_ms(1);
+		if(operation ==1)
+		{
+			
+			playNote(noteArray[i],noteArray[i+1]);
+			while(!nextNote)
+				_delay_ms(1);
+		}
+		else
+		{
+			i =length;
+		}
 	}
 }
 
-void SetDelay(long x){
+void SetDelay(long x)
+{
 	if(x>261120)
 		return;//too big for the timer
-	else if(x>65280){
+	else if(x>65280)
+	{
 		DelayTime=-(x/1024);
 		TCNT0=-(x/1024);
 		TCCR0B=0x05;
 	}
-	else if(x>16320){
+	else if(x>16320)
+	{
 		DelayTime=-(x/256);
 		TCNT0=-(x/256);
 		TCCR0B=0x04;
 	}
-	else if(x>2040){
+	else if(x>2040)
+	{
 		DelayTime=-(x/64);
 		TCNT0=-(x/64);
 		TCCR0B=0x03;
 	}
-	else if(x>255){
+	else if(x>255)
+	{
 		DelayTime=-(x/8);
 		TCNT0=-(x/8);
 		TCCR0B=0x02;
 	}
-	else if(x>0){
+	else if(x>0)
+	{
 		DelayTime=-x;
 		TCNT0=-(x);
 		TCCR0B=0x01;
 	}
-	PORTD=0xF0;
 	return;
 }
-
-ISR(TIMER0_OVF_vect){
-	PORTD=0x0F;
-	TCNT0=DelayTime;
-	if(MusicCycles>0){
-		MusicCycles-=1;
-		PORTE^=0x10;
-	}
-	else
-		nextNote=1;
-}
-
