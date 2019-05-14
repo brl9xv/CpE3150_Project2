@@ -168,7 +168,7 @@ int main (void)
 	UCSR1B |= (1 << RXCIE);    // receive interrupt enabled
 	sei();			// Set global interrupts
 	
-	USART_SendString("Song Mode:\nButton 1 = Mary had a little lamb\nButton 2 = Ode to Joy\nPress n for single note mode\n");
+	USART_SendString("\nSong Mode:\nButton 1 = Mary had a little lamb\nButton 2 = Ode to Joy\nButton 3 = Stop playback\nEnter 1-4 to change tempo multiplier\nEnter n for single note mode\nEnter 'I' to change to input song mode\n");
 	
 	while(1)
 	{
@@ -225,7 +225,7 @@ void playSong(int * noteArray, int length)
 {
 	for(int i=0; i<length; i+=2)
 	{
-		if(operation==1 || !(~PINA & 0b00000100) || operation==3)
+		if((operation==1 || operation==3) && !(~PINA & 0b00000100))
 		{
 			
 			playNote(noteArray[i],noteArray[i+1]);
@@ -332,7 +332,7 @@ ISR(USART1_RX_vect)
 	{
 		case 'S':
 			if(operation!=1)
-				USART_SendString("\nSong Mode:\nButton 1 = Mary had a little lamb\nButton 2 = Ode to Joy\nEnter 1-4 to change tempo multiplier\nEnter n for single note mode\n");
+				USART_SendString("\nSong Mode:\nButton 1 = Mary had a little lamb\nButton 2 = Ode to Joy\nButton 3 = Stop playback\nEnter 1-4 to change tempo multiplier\nEnter n for single note mode\nEnter 'I' to change to input song mode\n");
 			operation = 1;
 			break;
 		case 'N':
@@ -372,7 +372,7 @@ ISR(USART1_RX_vect)
 		case 'I':
 			memset(inputstring, 0, sizeof(inputstring));
 			if(operation!=3)
-				USART_SendString("Note Input Mode\nType the note letters that you want played then press button 1 to play song\n");
+				USART_SendString("Note Input Mode\nType the note letters that you want played then note by note then press button 1 to play song\n");
 			operation=3;
 			break;
 	}
