@@ -203,8 +203,8 @@ void playNote(int frequency, int length)
 		_delay_ms(100);
 	}
 
-	SetDelay((16000000/frequency)*2);
-	MusicCycles = (frequency/length)/tempoList[tempo];//(offset/100);
+	SetDelay((16000000/frequency*(offset/100))*2);
+	MusicCycles = (frequency/(offset/100)/length)/tempoList[tempo];
 	TIMSK0 = 0x01;
 	nextNote = 0;
 
